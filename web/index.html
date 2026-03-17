@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>接线视觉检测系统</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <h1>接线视觉检测</h1>
+            <span class="version">v1.0.0</span>
+        </header>
+
+        <main class="app-main">
+            <section class="station-section">
+                <label>选择工位</label>
+                <select id="stationSelect">
+                    <option value="">请选择工位...</option>
+                    <option value="1">基础接线检测</option>
+                    <option value="2">多层端子检测</option>
+                    <option value="3">排线插头检测</option>
+                    <option value="4">PLC模块检测</option>
+                    <option value="5">短接线+端子台检测</option>
+                    <option value="6">短接片+端子台检测</option>
+                </select>
+            </section>
+
+            <section class="product-section">
+                <label>选择产品</label>
+                <select id="productSelect">
+                    <option value="">请选择产品...</option>
+                </select>
+                <button id="refreshProducts" class="btn-secondary">刷新</button>
+            </section>
+
+            <section class="capture-section">
+                <div class="preview-container">
+                    <video id="videoPreview" autoplay playsinline></video>
+                    <canvas id="captureCanvas" style="display:none;"></canvas>
+                    <img id="imagePreview" alt="预览" style="display:none;">
+                </div>
+                <div class="capture-hints" id="captureHints">
+                    <p>请拍摄清晰的接线照片</p>
+                </div>
+                <div class="capture-controls">
+                    <button id="startCamera" class="btn-primary">开启相机</button>
+                    <button id="captureImage" class="btn-primary" disabled>拍照</button>
+                    <button id="retake" class="btn-secondary" style="display:none;">重拍</button>
+                </div>
+            </section>
+
+            <section class="upload-section">
+                <div class="divider">
+                    <span>或</span>
+                </div>
+                <input type="file" id="fileInput" accept="image/*" capture="environment">
+                <label for="fileInput" class="btn-upload">
+                    <span>📁 选择图片</span>
+                </label>
+            </section>
+
+            <section class="action-section">
+                <button id="uploadAndDetect" class="btn-large btn-success" disabled>
+                    上传并检测
+                </button>
+            </section>
+
+            <section class="result-section" id="resultSection" style="display:none;">
+                <h2>检测结果</h2>
+                <div class="result-status" id="resultStatus">
+                    <span class="status-badge">-</span>
+                </div>
+                <div class="result-details" id="resultDetails"></div>
+                <div class="result-score">
+                    相似度: <span id="similarityScore">-</span>
+                </div>
+                <div class="error-list" id="errorList"></div>
+            </section>
+
+            <section class="history-section">
+                <h2>检测历史</h2>
+                <div class="history-list" id="historyList">
+                    <p class="empty-hint">暂无检测记录</p>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+        <div class="spinner"></div>
+        <p id="loadingText">处理中...</p>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>
