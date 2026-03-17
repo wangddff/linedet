@@ -6,8 +6,8 @@ from sqlalchemy import (
     ForeignKey,
     Boolean,
     DECIMAL,
-    JSONB,
     Text,
+    JSON,
 )
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -74,7 +74,7 @@ class Task(Base):
     image_filename = Column(String(100), nullable=True)
     similarity_score = Column(DECIMAL(5, 4), nullable=True)
     overall_result = Column(String(20), nullable=True)
-    error_details = Column(JSONB, nullable=True)
+    error_details = Column(JSON, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     completed_at = Column(DateTime(timezone=True), nullable=True)
 
@@ -88,7 +88,7 @@ class DetectionResult(Base):
     id = Column(Integer, primary_key=True, index=True)
     task_id = Column(Integer, ForeignKey("tasks.id"), nullable=False)
     module = Column(String(20), nullable=False)
-    details = Column(JSONB, nullable=True)
+    details = Column(JSON, nullable=True)
     passed = Column(Boolean, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 

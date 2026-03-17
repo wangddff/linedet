@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Request
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from pydantic import BaseModel
@@ -110,13 +110,51 @@ async def create_task(task_data: TaskCreate, db: Session = Depends(get_db)):
 
 @router.post("/{task_id}/upload")
 async def upload_image(
-    task_id: int, file: UploadFile = File(...), db: Session = Depends(get_db)
+    request: Request,
+    task_id: int,
+    file: Optional[UploadFile] = File(None),
+    image_data: Optional[str] = Form(None),
+    db: Session = Depends(get_db),
 ):
+    # Try to get image_data from JSON body if not in Form
+    if image_data is None:
+        try:
+            body = await request.body()
+            import json
+
+            data = json.loads(body) if body else {}
+            image_data = data.get("image_data")
+        except:
+            pass
+
     task = db.query(Task).filter(Task.id == task_id).first()
     if not task:
         raise HTTPException(status_code=404, detail="任务不存在")
 
     os.makedirs(UPLOAD_DIR, exist_ok=True)
+
+    if image_data:
+        import base64
+
+        try:
+            if "," in image_data:
+                image_data = image_data.split(",")[1]
+            image_bytes = base64.b64decode(image_data)
+            ext = "jpg"
+            filename = f"{uuid.uuid4()}.{ext}"
+            filepath = os.path.join(UPLOAD_DIR, filename)
+            with open(filepath, "wb") as f:
+                f.write(image_bytes)
+            task.image_path = filepath
+            task.image_filename = filename
+            task.status = "uploaded"
+            db.commit()
+            return {"message": "上传成功", "filename": filename, "filepath": filepath}
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"图片解码失败: {str(e)}")
+
+    if file is None:
+        raise HTTPException(status_code=400, detail="未提供图片文件")
 
     ext = file.filename.split(".")[-1] if "." in file.filename else "png"
     filename = f"{uuid.uuid4()}.{ext}"
