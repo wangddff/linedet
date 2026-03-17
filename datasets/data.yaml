@@ -1,0 +1,18 @@
+# YOLO11 数据集配置文件
+# 类别名称（必须与训练代码一致）
+names:
+  0: terminal_hole    # 端子孔位
+  1: number_tube      # 号码管
+  2: wire             # 线材
+  3: plc_module       # PLC模块
+  4: short_wire       # 短接线
+  5: jumper           # 短接片
+  6: connector        # 插头
+
+# 数据集路径
+path: ./datasets
+train: images/train
+val: images/val
+
+# 类别数量
+nc: 7

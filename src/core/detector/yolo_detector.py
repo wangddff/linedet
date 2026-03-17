@@ -33,6 +33,18 @@ class YOLODetector:
         """获取默认模型路径"""
         base_dir = Path(__file__).parent.parent.parent.parent / "models" / "yolo"
         default_model = base_dir / "best.pt"
+        if default_model.exists():
+            return str(default_model)
+        base_dir = (
+            Path(__file__).parent.parent.parent
+            / "runs"
+            / "detect"
+            / "runs"
+            / "detect"
+            / "train"
+            / "weights"
+        )
+        default_model = base_dir / "best.pt"
         return str(default_model) if default_model.exists() else ""
 
     def _load_model(self):
@@ -51,7 +63,9 @@ class YOLODetector:
             try:
                 from ultralytics import YOLO
 
-                self.model = YOLO(f"{self.model_name}.pt")
+                self.model = YOLO(
+                    self.model_path if self.model_path else f"{self.model_name}.pt"
+                )
                 print(f"[YOLODetector] YOLOv11预训练模型加载成功: {self.model_name}.pt")
             except Exception as e:
                 print(f"[YOLODetector] 警告: 模型加载失败 ({e})，将使用模拟模式")
