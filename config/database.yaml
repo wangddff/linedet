@@ -1,0 +1,20 @@
+development:
+  host: "localhost"
+  port: 5432
+  database: "linedet"
+  username: "linedet"
+  password: "linedet123"
+
+production:
+  host: "localhost"
+  port: 5432
+  database: "linedet"
+  username: "linedet"
+  password: "linedet123"
+
+test:
+  host: "localhost"
+  port: 5432
+  database: "linedet_test"
+  username: "linedet"
+  password: "linedet123"

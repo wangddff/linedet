@@ -1,0 +1,26 @@
+app:
+  name: "接线视觉检测系统"
+  version: "1.0.0"
+  debug: true
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+
+database:
+  url: "postgresql://linedet:linedet123@localhost:5432/linedet"
+  echo: false
+
+storage:
+  base_path: "data"
+  standard_images: "data/standard_images"
+  raw_images: "data/images/raw"
+  result_images: "data/images/results"
+  exports: "data/exports"
+  max_upload_size: 10485760  # 10MB
+
+detection:
+  similarity_threshold: 0.85
+  yolo_conf_threshold: 0.25
+  yolo_iou_threshold: 0.45
+  ocr_min_confidence: 0.6

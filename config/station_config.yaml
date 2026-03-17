@@ -1,0 +1,100 @@
+stations:
+  1:
+    name: "基础接线检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+    has_layer: false
+    has_connector: false
+    has_plc: false
+    has_short_wire: false
+    has_jumper: false
+    similarity_threshold: 0.85
+
+  2:
+    name: "多层端子检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+      - layer_order
+    has_layer: true
+    layer_order: "bottom_to_top"
+    has_connector: false
+    has_plc: false
+    has_short_wire: false
+    has_jumper: false
+    similarity_threshold: 0.85
+
+  3:
+    name: "排线插头检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+      - connector_installed
+      - layer_order
+    has_layer: true
+    layer_order: "bottom_to_top"
+    has_connector: true
+    has_plc: false
+    has_short_wire: false
+    has_jumper: false
+    similarity_threshold: 0.85
+
+  4:
+    name: "PLC模块检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+      - plc_module_type
+      - plc_module_position
+    has_layer: false
+    has_connector: false
+    has_plc: true
+    has_short_wire: false
+    has_jumper: false
+    vertical_terminal_handling: true
+    similarity_threshold: 0.85
+
+  5:
+    name: "短接线+端子台检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+      - short_wire_correct
+      - terminal_group_check
+      - layer_order
+    has_layer: true
+    layer_order: "bottom_to_top"
+    has_connector: false
+    has_plc: false
+    has_short_wire: true
+    has_jumper: false
+    similarity_threshold: 0.85
+
+  6:
+    name: "短接片+端子台检测"
+    check_items:
+      - wire_number_match
+      - wire_color
+      - missing_wire
+      - extra_wire
+      - jumper_correct
+      - terminal_group_check
+      - layer_order
+    has_layer: true
+    layer_order: "bottom_to_top"
+    has_connector: false
+    has_plc: false
+    has_short_wire: false
+    has_jumper: true
+    similarity_threshold: 0.85

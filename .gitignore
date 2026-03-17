@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+.venv/
+venv/
+ENV/
+env/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Models
+models/yolo/*.pt
+models/ocr/*
+!models/yolo/.gitkeep
+!models/ocr/.gitkeep
+
+# Data
+data/images/
+data/exports/
+data/standard_images/
+*.png
+*.jpg
+*.jpeg
+!request/pic/*.png
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Ultralytics
+yolo11n.pt
+*.pt
+
+# PaddleOCR
+.paddleocr/
+
+# Database
+*.db
+*.sqlite3
+
+# Environment
+.env
+.env.local
