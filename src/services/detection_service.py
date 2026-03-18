@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 
 
 class DetectionService:
@@ -72,6 +73,21 @@ class DetectionService:
         validate_result = validator.validate(ocr_result, color_result)
         results["validator"] = validate_result
 
+        # 6. 图像标注
+        from src.utils.image_annotator import ImageAnnotator
+
+        annotator = ImageAnnotator()
+        try:
+            annotated_path = annotator.annotate_image(
+                task.image_path,
+                detect_result,
+                ocr_result,
+                color_result,
+            )
+        except Exception as e:
+            print(f"[DetectionService] 图像标注失败: {e}")
+            annotated_path = task.image_path
+
         # 综合判断
         all_passed = all(r.get("passed", False) for r in results.values())
 
@@ -85,6 +101,7 @@ class DetectionService:
                 "color_results": color_result,
                 "validation_result": validate_result,
                 "module_results": results,
+                "annotated_image": annotated_path,
             }
         )
 
