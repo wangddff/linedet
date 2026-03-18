@@ -59,7 +59,7 @@ class DetectionService:
         # 4. 颜色检测
         from src.core.color.color_detector import ColorDetector
 
-        color_det = ColorDetector()
+        color_det = ColorDetector(station_id=task.station_id)
         color_result = color_det.detect(
             task.image_path, detect_result.get("wire_rois", [])
         )

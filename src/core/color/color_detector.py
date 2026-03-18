@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 from typing import Dict, List, Any, Optional, Tuple
+from pathlib import Path
 
 
 class ColorDetector:
@@ -91,8 +92,136 @@ class ColorDetector:
 
     PIXEL_TO_MM_RATIO = 0.05
 
-    def __init__(self):
+    def __init__(self, station_id: Optional[int] = None):
         self.hsv_image = None
+        self.station_id = station_id
+        self.standard_colors = {}
+        if station_id:
+            self.standard_colors = self._load_standard_colors(station_id)
+
+    def _load_standard_colors(self, station_id: int) -> Dict[str, Any]:
+        """从标准图提取标准颜色"""
+        base_dir = Path("data/standard_images")
+        station_dir = base_dir / f"station_{station_id}"
+
+        if not station_dir.exists():
+            print(f"[ColorDetector] 标准图目录不存在: {station_dir}")
+            return {}
+
+        standard_colors = {}
+        for ext in ["*.png", "*.jpg", "*.jpeg"]:
+            for std_path in station_dir.glob(ext):
+                std_img = cv2.imread(str(std_path))
+                if std_img is None:
+                    continue
+
+                print(f"[ColorDetector] 正在提取标准图颜色: {std_path.name}")
+
+                hsv_std = cv2.cvtColor(std_img, cv2.COLOR_BGR2HSV)
+
+                wires = self._detect_wire_regions(hsv_std)
+
+                for i, wire in enumerate(wires):
+                    color_name = wire.get("color", "未知")
+                    standard_colors[f"wire_{i}"] = {
+                        "color": color_name,
+                        "position": wire.get("position"),
+                        "hsv": wire.get("hsv"),
+                    }
+
+                print(f"[ColorDetector] 标准图颜色提取完成: {standard_colors}")
+
+        return standard_colors
+
+    def _detect_wire_regions(self, hsv_img: np.ndarray) -> List[Dict[str, Any]]:
+        """检测线材区域并识别颜色"""
+        h, w = hsv_img.shape[:2]
+
+        wire_regions = []
+
+        h_channel = hsv_img[:, :, 0]
+        s_channel = hsv_img[:, :, 1]
+
+        mask = s_channel > 50
+
+        contours, _ = cv2.findContours(
+            mask.astype(np.uint8), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE
+        )
+
+        for i, cnt in enumerate(contours):
+            area = cv2.contourArea(cnt)
+            if area < 500:
+                continue
+
+            x, y, cw, ch = cv2.boundingRect(cnt)
+
+            if ch < 5 or cw < 10:
+                continue
+
+            roi_h = hsv_img[y : y + ch, x : x + cw]
+            if roi_h.size == 0:
+                continue
+
+            h_mean = float(np.mean(roi_h[:, :, 0]))
+            s_mean = float(np.mean(roi_h[:, :, 1]))
+            v_mean = float(np.mean(roi_h[:, :, 2]))
+
+            color_name = self._get_color_name(h_mean, s_mean, v_mean)
+
+            wire_regions.append(
+                {
+                    "color": color_name,
+                    "position": (x + cw // 2, y + ch // 2),
+                    "hsv": {"h": float(h_mean), "s": float(s_mean), "v": float(v_mean)},
+                    "bbox": [x, y, cw, ch],
+                }
+            )
+
+        wire_regions.sort(key=lambda x: x["position"][0])
+
+        return wire_regions
+
+    def _get_color_name(
+        self, h: float, s: float, v: float, threshold: float = 0.5
+    ) -> str:
+        """根据 HSV 值获取颜色名称"""
+        detected_color = None
+        max_similarity = 0
+
+        for color_name, ranges in self.WIRE_COLORS.items():
+            h_min, h_max = ranges["h_min"], ranges["h_max"]
+            s_min, s_max = ranges["s_min"], ranges["s_max"]
+            v_min, v_max = ranges["v_min"], ranges["v_max"]
+
+            if color_name == "红色":
+                h_in_range = (0 <= h <= 10) or (170 <= h <= 180)
+            else:
+                h_in_range = h_min <= h <= h_max
+
+            s_in_range = s_min <= s <= s_max
+            v_in_range = v_min <= v <= v_max
+
+            if h_in_range and s_in_range and v_in_range:
+                similarity = 1.0
+            else:
+                if color_name == "红色":
+                    if h <= 10:
+                        h_dist = min(abs(h - h_min), abs(h - 0), 30)
+                    else:
+                        h_dist = min(abs(h - h_max), abs(h - 180), 30)
+                else:
+                    h_dist = min(abs(h - h_min), abs(h - h_max), 30)
+                s_dist = min(abs(s - s_min), abs(s - s_max)) / 255
+                v_dist = min(abs(v - v_min), abs(v - v_max)) / 255
+                similarity = 1.0 - (h_dist / 30 + s_dist + v_dist) / 3
+
+            if similarity > max_similarity:
+                max_similarity = similarity
+                detected_color = color_name
+
+        if max_similarity < threshold:
+            return "未知"
+        return detected_color or "未知"
 
     def detect(
         self, image_path: str, wire_rois: Optional[List[Dict]] = None
@@ -131,13 +260,72 @@ class ColorDetector:
 
         wire_diameters = self._detect_wire_diameter(img, wire_rois)
 
-        passed = len(results) > 0 and all(r.get("detected") for r in results)
+        compare_result = self._compare_with_standard(results)
+
+        passed = (
+            len(results) > 0
+            and all(r.get("detected") for r in results)
+            and compare_result.get("passed", False)
+        )
+
+        print(f"\n========== Color Detection Result ==========")
+        print(f"检测到的颜色: {[r.get('color') for r in results]}")
+        print(f"标准颜色: {[v.get('color') for v in self.standard_colors.values()]}")
+        print(
+            f"颜色比对结果: passed={compare_result.get('passed')}, message={compare_result.get('message')}"
+        )
+        if compare_result.get("errors"):
+            print(f"颜色问题: {compare_result['errors']}")
+        print(f"=============================================\n")
 
         return {
             "passed": passed,
             "colors": results,
             "wire_diameters": wire_diameters,
             "total_wires": len(results),
+            "compare_result": compare_result,
+        }
+
+    def _compare_with_standard(self, current_colors: List[Dict]) -> Dict[str, Any]:
+        """与标准图颜色比对"""
+        if not self.standard_colors:
+            return {"passed": True, "message": "无标准颜色，跳过比对", "errors": []}
+
+        errors = []
+        current_color_list = [c.get("color") for c in current_colors]
+        standard_color_list = [v.get("color") for v in self.standard_colors.values()]
+
+        if len(current_color_list) < len(standard_color_list):
+            errors.append(
+                {
+                    "type": "missing_wire",
+                    "message": f"线材数量不足: 期望 {len(standard_color_list)}, 实际 {len(current_color_list)}",
+                }
+            )
+
+        for i, std_color in enumerate(standard_color_list):
+            if i < len(current_color_list):
+                curr_color = current_color_list[i]
+                if (
+                    curr_color != std_color
+                    and curr_color != "未知"
+                    and std_color != "未知"
+                ):
+                    errors.append(
+                        {
+                            "type": "color_mismatch",
+                            "wire_index": i,
+                            "expected": std_color,
+                            "actual": curr_color,
+                            "message": f"线{i + 1}颜色不匹配: 期望 {std_color}, 实际 {curr_color}",
+                        }
+                    )
+
+        passed = len(errors) == 0
+        return {
+            "passed": passed,
+            "message": "颜色比对通过" if passed else f"发现 {len(errors)} 个颜色问题",
+            "errors": errors,
         }
 
     def _detect_roi_color(self, roi: np.ndarray) -> Optional[Dict[str, Any]]:
@@ -156,16 +344,26 @@ class ColorDetector:
         max_similarity = 0
 
         for color_name, ranges in self.WIRE_COLORS.items():
-            h_in_range = ranges["h_min"] <= h_mean <= ranges["h_max"]
+            h_min, h_max = ranges["h_min"], ranges["h_max"]
+
+            if color_name == "红色":
+                h_in_range = (0 <= h_mean <= 10) or (170 <= h_mean <= 180)
+            else:
+                h_in_range = h_min <= h_mean <= h_max
+
             s_in_range = ranges["s_min"] <= s_mean <= ranges["s_max"]
             v_in_range = ranges["v_min"] <= v_mean <= ranges["v_max"]
 
             if h_in_range and s_in_range and v_in_range:
                 similarity = 1.0
             else:
-                h_dist = min(
-                    abs(h_mean - ranges["h_min"]), abs(h_mean - ranges["h_max"]), 30
-                )
+                if color_name == "红色":
+                    if h_mean <= 10:
+                        h_dist = min(abs(h_mean - h_min), abs(h_mean - 0), 30)
+                    else:
+                        h_dist = min(abs(h_mean - h_max), abs(h_mean - 180), 30)
+                else:
+                    h_dist = min(abs(h_mean - h_min), abs(h_mean - h_max), 30)
                 s_dist = (
                     min(abs(s_mean - ranges["s_min"]), abs(s_mean - ranges["s_max"]))
                     / 255
@@ -270,7 +468,9 @@ class ColorDetector:
                 best_similarity = similarity
                 best_match = color_name
 
-        return best_match if best_similarity > 0.8 else "未知"
+        if best_similarity > 0.8 and best_match is not None:
+            return str(best_match)
+        return "未知"
 
     def get_color_histogram(self, roi: np.ndarray) -> Dict[str, np.ndarray]:
         """获取颜色直方图"""
