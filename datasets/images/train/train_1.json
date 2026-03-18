@@ -3,435 +3,147 @@
   "flags": {},
   "shapes": [
     {
-      "label": "wire",
+      "label": "connector",
       "points": [
         [
-          31.0,
-          160.0
+          250.75,
+          258.0
         ],
         [
-          254.0,
-          294.0
+          268.25,
+          270.5
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.3316951394081116, \"text\": \"wire\"}",
+      "group_id": 1,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          417.0,
-          408.0
-        ],
-        [
-          489.0,
-          531.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.2888403534889221, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          3.0,
-          150.0
-        ],
-        [
-          262.0,
-          419.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.288065105676651, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          30.0,
-          49.0
-        ],
-        [
-          488.0,
-          191.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.20081615447998047, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          42.0,
-          124.0
-        ],
-        [
-          478.0,
-          192.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.1442563235759735, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          162.0,
-          295.0
-        ],
-        [
-          244.0,
-          303.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.7392016053199768, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          159.0,
-          379.0
-        ],
-        [
-          242.0,
-          393.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.7347266674041748, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          -1.0,
-          318.0
-        ],
-        [
-          254.0,
-          417.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.7131913304328918, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          479.0,
-          455.0
-        ],
-        [
-          489.0,
-          486.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6982200145721436, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          423.0,
-          175.0
-        ],
-        [
-          440.0,
-          279.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6724252700805664, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          4.0,
-          152.0
-        ],
-        [
-          112.0,
-          385.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6492913961410522, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          151.0,
-          370.0
-        ],
-        [
-          242.0,
-          389.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6396874189376831, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          460.0,
-          451.0
-        ],
-        [
-          477.0,
-          485.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6339190602302551, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          469.0,
-          451.0
-        ],
-        [
-          489.0,
-          491.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.6272945404052734, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          471.0,
-          180.0
-        ],
-        [
-          483.0,
-          248.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.5747259855270386, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          164.0,
-          284.0
-        ],
-        [
-          244.0,
-          297.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.5642501711845398, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          463.0,
-          182.0
-        ],
-        [
-          482.0,
-          290.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.5370073318481445, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
-      "mask": null
-    },
-    {
-      "label": "wire",
-      "points": [
-        [
-          463.0,
-          183.0
-        ],
-        [
-          473.0,
-          247.0
-        ]
-      ],
-      "group_id": null,
-      "description": "{\"score\": 0.5113599896430969, \"text\": \"wire\"}",
-      "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
       "label": "connector",
       "points": [
         [
-          245.0,
-          278.0
+          249.75,
+          279.5
         ],
         [
-          264.0,
-          306.0
+          266.25,
+          307.0
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.8495757579803467, \"text\": \"connector\"}",
+      "group_id": 2,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
       "label": "connector",
       "points": [
         [
-          245.0,
-          256.0
+          252.75,
+          316.5
         ],
         [
-          264.0,
-          272.0
+          266.25,
+          345.0
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.8424497842788696, \"text\": \"connector\"}",
+      "group_id": 3,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
       "label": "connector",
       "points": [
         [
-          243.0,
+          243.75,
           368.0
         ],
         [
-          261.0,
-          390.0
+          266.75,
+          391.5
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.8417137861251831, \"text\": \"connector\"}",
+      "group_id": 4,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
-      "label": "connector",
+      "label": "wire",
       "points": [
         [
-          209.0,
-          318.0
+          188.25,
+          258.5
         ],
         [
-          263.0,
-          342.0
+          248.75,
+          276.0
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.6768874526023865, \"text\": \"connector\"}",
+      "group_id": 1,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
-      "label": "connector",
+      "label": "wire",
       "points": [
         [
-          255.0,
-          316.0
+          193.75,
+          284.5
         ],
         [
-          264.0,
-          344.0
+          248.25,
+          303.5
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.6686487793922424, \"text\": \"connector\"}",
+      "group_id": 2,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
       "mask": null
     },
     {
-      "label": "connector",
+      "label": "wire",
       "points": [
         [
-          253.0,
-          405.0
+          191.75,
+          311.0
         ],
         [
-          262.0,
-          433.0
+          251.25,
+          344.5
         ]
       ],
-      "group_id": null,
-      "description": "{\"score\": 0.6178069710731506, \"text\": \"connector\"}",
+      "group_id": 3,
+      "description": "",
       "shape_type": "rectangle",
-      "flags": null,
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "wire",
+      "points": [
+        [
+          189.75,
+          368.0
+        ],
+        [
+          242.25,
+          394.5
+        ]
+      ],
+      "group_id": 4,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
       "mask": null
     }
   ],

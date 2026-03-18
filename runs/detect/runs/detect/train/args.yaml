@@ -1,11 +1,11 @@
 task: detect
 mode: train
-model: yolo11s.pt
-data: datasets/data.yaml
+model: /Users/wangddff/project/VL/linedect/linedect/yolo11s.pt
+data: /Users/wangddff/project/VL/linedect/linedect/datasets/data.yaml
 epochs: 100
 time: null
-patience: 100
-batch: 8
+patience: 20
+batch: 16
 imgsz: 640
 save: true
 save_period: -1

@@ -30,10 +30,11 @@ def prepare_dataset():
 
 def train():
     """训练YOLO11s模型"""
-    model = YOLO("yolo11s.pt")
+    base_dir = Path(__file__).parent
+    model = YOLO(base_dir / "yolo11s.pt")
 
     results = model.train(
-        data="datasets/data.yaml",
+        data=str(base_dir / "datasets/data.yaml"),
         epochs=100,
         imgsz=640,
         batch=16,
