@@ -45,7 +45,7 @@ class DetectionService:
         # 2. 目标检测
         from src.core.detector.yolo_detector import YOLODetector
 
-        detector = YOLODetector()
+        detector = YOLODetector(station_id=task.station_id)
         detect_result = detector.detect(task.image_path)
         results["detector"] = detect_result
 
