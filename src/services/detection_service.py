@@ -1,3 +1,6 @@
+import numpy as np
+
+
 class DetectionService:
     """检测服务主类"""
 
@@ -5,6 +8,20 @@ class DetectionService:
         from src.utils.config import get_station_config
 
         self.station_config = get_station_config()
+
+    def _clean_for_json(self, obj):
+        """清理对象中的numpy数组，用于JSON序列化"""
+        if isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, np.integer):
+            return int(obj)
+        elif isinstance(obj, np.floating):
+            return float(obj)
+        elif isinstance(obj, dict):
+            return {k: self._clean_for_json(v) for k, v in obj.items()}
+        elif isinstance(obj, (list, tuple)):
+            return [self._clean_for_json(item) for item in obj]
+        return obj
 
     def run_detection(self, task):
         """执行完整检测流程"""
@@ -58,16 +75,18 @@ class DetectionService:
         # 综合判断
         all_passed = all(r.get("passed", False) for r in results.values())
 
-        return {
-            "similarity_score": compare_result.get("similarity_score", 0),
-            "overall_result": "pass" if all_passed else "fail",
-            "errors": self._collect_errors(results),
-            "detections": detect_result,
-            "ocr_results": ocr_result,
-            "color_results": color_result,
-            "validation_result": validate_result,
-            "module_results": results,
-        }
+        return self._clean_for_json(
+            {
+                "similarity_score": compare_result.get("similarity_score", 0),
+                "overall_result": "pass" if all_passed else "fail",
+                "errors": self._collect_errors(results),
+                "detections": detect_result,
+                "ocr_results": ocr_result,
+                "color_results": color_result,
+                "validation_result": validate_result,
+                "module_results": results,
+            }
+        )
 
     def _collect_errors(self, results):
         """收集所有错误"""
