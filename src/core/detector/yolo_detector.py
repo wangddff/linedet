@@ -101,13 +101,28 @@ class YOLODetector:
             rois = self._extract_rois(detections, img, ["number_tube", "terminal_hole"])
             wire_rois = self._extract_rois(detections, img, ["wire", "short_wire"])
 
-            return {
+            result = {
                 "passed": True,
                 "detections": detections,
                 "rois": rois,
                 "wire_rois": wire_rois,
                 "total_count": len(detections),
             }
+
+            print(f"\n========== YOLO Detection Result ==========")
+            print(f"Image: {image_path}")
+            print(f"Total detections: {len(detections)}")
+            print(f"Detected objects:")
+            class_counts = {}
+            for d in detections:
+                cls_name = d["class_name"]
+                class_counts[cls_name] = class_counts.get(cls_name, 0) + 1
+                print(f"  - {cls_name}: bbox={d['bbox']}, conf={d['confidence']:.2f}")
+            print(f"Class summary: {class_counts}")
+            print(f"Wire ROIs count: {len(wire_rois)}")
+            print(f"===============================================\n")
+
+            return result
 
         except Exception as e:
             return {
