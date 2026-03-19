@@ -145,6 +145,24 @@
       "shape_type": "rectangle",
       "flags": {},
       "mask": null
+    },
+    {
+      "label": "detect_area",
+      "points": [
+        [
+          151.38235294117646,
+          190.23529411764707
+        ],
+        [
+          438.6372549019608,
+          487.29411764705884
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
     }
   ],
   "imagePath": "train_1.png",

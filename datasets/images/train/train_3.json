@@ -1189,6 +1189,78 @@
       "shape_type": "rectangle",
       "flags": {},
       "mask": null
+    },
+    {
+      "label": "detect_area",
+      "points": [
+        [
+          66.02631578947376,
+          65.05263157894737
+        ],
+        [
+          351.2193270060397,
+          707.0
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "connector",
+      "points": [
+        [
+          83.92105263157896,
+          89.26315789473685
+        ],
+        [
+          191.28947368421052,
+          198.73684210526318
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "connector",
+      "points": [
+        [
+          90.23684210526324,
+          230.31578947368422
+        ],
+        [
+          195.5,
+          349.2631578947368
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "connector",
+      "points": [
+        [
+          92.34210526315792,
+          391.36842105263156
+        ],
+        [
+          196.5526315789474,
+          500.84210526315786
+        ]
+      ],
+      "group_id": null,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
     }
   ],
   "imagePath": "train_3.png",
