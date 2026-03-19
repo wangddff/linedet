@@ -194,11 +194,16 @@ async def run_detection(task_id: int, db: Session = Depends(get_db)):
 
     module_results = result.get("module_results", {})
     for module_name, module_result in module_results.items():
+        from src.services.detection_service import DetectionService
+
+        service = DetectionService()
+        cleaned_details = service._clean_for_json(module_result)
+
         detection_result = DetectionResult(
             task_id=task.id,
             module=module_name,
-            details=module_result,
-            passed=module_result.get("passed", False),
+            details=cleaned_details,
+            passed=bool(module_result.get("passed", False)),
         )
         db.add(detection_result)
     db.commit()

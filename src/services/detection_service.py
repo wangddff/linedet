@@ -1,5 +1,4 @@
 import numpy as np
-import cv2
 from pathlib import Path
 
 
@@ -14,9 +13,13 @@ class DetectionService:
         self._rois = None
 
     def _clean_for_json(self, obj):
-        """清理对象中的numpy数组，用于JSON序列化"""
-        if isinstance(obj, np.ndarray):
+        """清理对象中的numpy类型，用于JSON序列化"""
+        if obj is None:
+            return obj
+        elif isinstance(obj, np.ndarray):
             return obj.tolist()
+        elif isinstance(obj, (np.bool_, bool)):
+            return bool(obj)
         elif isinstance(obj, np.integer):
             return int(obj)
         elif isinstance(obj, np.floating):
@@ -39,6 +42,10 @@ class DetectionService:
         6. 规则校验
         """
         results = {}
+        roi_compare_result = None
+        roi_comparator = None
+
+        import cv2
 
         img = cv2.imread(task.image_path)
         if img is None:
@@ -151,6 +158,59 @@ class DetectionService:
                 "module_results": results,
             }
 
+        print(f"\n========== ROI 区域对比 ==========")
+        from src.core.comparator.roi_comparator import ROIComparator
+        from src.core.roi import ROILoader, ROICropper
+
+        std_json_path = Path(labelme_dir) / "train_1.json"
+        if std_json_path.exists():
+            std_roi_data = roi_loader.load_from_labelme(str(std_json_path))
+            std_detect_area = std_roi_data.get("detect_area")
+            std_rois = std_roi_data.get("rois", [])
+
+            if scale_factor != 1.0:
+                if std_detect_area:
+                    std_detect_area = std_detect_area.scale(scale_factor)
+                std_rois = [roi.scale(scale_factor) for roi in std_rois]
+
+            if detect_area:
+                crop_result = roi_cropper.crop_with_detect_area(
+                    preprocessed_img, detect_area, rois
+                )
+                test_detect_area_img = crop_result["detect_area_img"]
+                test_roi_crops = crop_result["rois"]
+
+                std_crop_result = roi_cropper.crop_with_detect_area(
+                    preprocessed_img, std_detect_area, std_rois
+                )
+                std_detect_area_img = std_crop_result["detect_area_img"]
+                std_roi_crops = std_crop_result["rois"]
+            else:
+                test_detect_area_img = preprocessed_img
+                std_detect_area_img = preprocessed_img
+                std_roi_crops = roi_cropper.crop_multiple(std_detect_area_img, std_rois)
+                test_roi_crops = roi_cropper.crop_multiple(test_detect_area_img, rois)
+
+            roi_comparator = ROIComparator(similarity_threshold=0.8)
+            roi_compare_result = roi_comparator.compare_roi_regions(
+                std_detect_area_img,
+                test_detect_area_img,
+                std_roi_crops,
+                test_roi_crops,
+            )
+            results["roi_compare"] = roi_compare_result
+
+            print(f"ROI 对比: {roi_compare_result.get('passed', False)}")
+            print(f"  总 ROI 数: {roi_compare_result.get('total_rois', 0)}")
+            print(f"  有效对比: {roi_compare_result.get('valid_rois', 0)}")
+            print(f"  跳过(空ROI): {roi_compare_result.get('skipped_rois', 0)}")
+            print(f"  通过: {roi_compare_result.get('passed_count', 0)}")
+            print(f"  失败: {roi_compare_result.get('failed_count', 0)}")
+            print(
+                f"  平均相似度: {roi_compare_result.get('average_similarity', 0):.3f}"
+            )
+            print(f"==============================\n")
+
         from src.core.ocr.text_recognizer import TextRecognizer
 
         ocr = TextRecognizer()
@@ -191,6 +251,18 @@ class DetectionService:
                 ocr_result,
                 color_result,
             )
+
+            if roi_compare_result and roi_compare_result.get("failed_rois"):
+                import cv2
+
+                annotated_img = cv2.imread(annotated_path)
+                failed_rois = roi_compare_result.get("failed_rois", [])
+                annotated_img = roi_comparator.mark_diff_areas(
+                    annotated_img, failed_rois, color=(0, 0, 255), thickness=2
+                )
+                cv2.imwrite(annotated_path, annotated_img)
+                print(f"[DetectionService] 已标注差异区域: {len(failed_rois)} 个")
+
         except Exception as e:
             print(f"[DetectionService] 图像标注失败: {e}")
             annotated_path = task.image_path
