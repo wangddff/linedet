@@ -72,13 +72,8 @@ class DetectionService:
         roi_loader = ROILoader(station_id=task.station_id)
         labelme_dir = "datasets/images/train"
 
-        json_name = Path(task.image_path).stem
-        json_path = Path(labelme_dir) / f"{json_name}.json"
-
-        if not json_path.exists():
-            json_path = Path(labelme_dir) / "train_1.json"
-
-        roi_data = roi_loader.load_from_labelme(str(json_path))
+        std_json_path = Path(labelme_dir) / "train_1.json"
+        roi_data = roi_loader.load_from_labelme(str(std_json_path))
         detect_area = roi_data.get("detect_area")
         rois = roi_data.get("rois", [])
 
@@ -168,15 +163,16 @@ class DetectionService:
             std_detect_area = std_roi_data.get("detect_area")
             std_rois = std_roi_data.get("rois", [])
 
-            if scale_factor != 1.0:
-                if std_detect_area:
-                    std_detect_area = std_detect_area.scale(scale_factor)
-                std_rois = [roi.scale(scale_factor) for roi in std_rois]
-
             std_image_path = str(Path(labelme_dir) / "train_1.png")
             std_preprocessor = ImagePreprocessor()
             std_preprocessed_img = std_preprocessor.preprocess(std_image_path)
             std_scale = std_preprocessor.get_scale_factor()
+            print(
+                f"[ROI对比] 标准图原始尺寸: 未知, 缩放后: {std_preprocessed_img.shape[1]}x{std_preprocessed_img.shape[0]}, std_scale={std_scale:.3f}"
+            )
+            print(
+                f"[ROI对比] 待检图缩放后: {preprocessed_img.shape[1]}x{preprocessed_img.shape[0]}, scale_factor={scale_factor:.3f}"
+            )
 
             if std_scale != 1.0:
                 if std_detect_area:
@@ -190,9 +186,33 @@ class DetectionService:
                 test_detect_area_img = crop_result["detect_area_img"]
                 test_roi_crops = crop_result["rois"]
 
-                std_crop_result = roi_cropper.crop_with_detect_area(
-                    std_preprocessed_img, std_detect_area, std_rois
-                )
+                if std_detect_area:
+                    offset_x = detect_area.bbox[0] - std_detect_area.bbox[0]
+                    offset_y = detect_area.bbox[1] - std_detect_area.bbox[1]
+                    print(
+                        f"[ROI对比] detect_area={detect_area.bbox}, std_detect_area={std_detect_area.bbox}, offset=({offset_x}, {offset_y})"
+                    )
+
+                    adjusted_std_rois = []
+                    for roi in std_rois:
+                        new_points = []
+                        for p in roi.points:
+                            new_x = p[0] + offset_x
+                            new_y = p[1] + offset_y
+                            new_points.append([new_x, new_y])
+                        from src.core.roi.roi_loader import ROI
+
+                        adjusted_roi = ROI(roi.label, new_points, roi.group_id)
+                        adjusted_std_rois.append(adjusted_roi)
+
+                    std_crop_result = roi_cropper.crop_with_detect_area(
+                        std_preprocessed_img, detect_area, adjusted_std_rois
+                    )
+                else:
+                    std_crop_result = roi_cropper.crop_with_detect_area(
+                        std_preprocessed_img, detect_area, std_rois
+                    )
+
                 std_detect_area_img = std_crop_result["detect_area_img"]
                 std_roi_crops = std_crop_result["rois"]
             else:
@@ -268,17 +288,24 @@ class DetectionService:
                 annotated_img = cv2.imread(annotated_path)
                 failed_rois = roi_compare_result.get("failed_rois", [])
 
-                detect_area_offset = (
-                    (detect_area.bbox[0], detect_area.bbox[1])
-                    if detect_area
-                    else (0, 0)
+                if scale_factor != 1.0 and detect_area:
+                    offset_x = int(detect_area.bbox[0] / scale_factor)
+                    offset_y = int(detect_area.bbox[1] / scale_factor)
+                else:
+                    offset_x = int(detect_area.bbox[0]) if detect_area else 0
+                    offset_y = int(detect_area.bbox[1]) if detect_area else 0
+                print(
+                    f"[标注] scale_factor={scale_factor}, detect_area_offset=({offset_x}, {offset_y})"
                 )
+
                 annotated_img = roi_comparator.mark_diff_areas(
                     annotated_img,
                     failed_rois,
                     color=(0, 0, 255),
                     thickness=2,
-                    detect_area_offset=detect_area_offset,
+                    detect_area_offset=(offset_x, offset_y),
+                    use_original_coords=False,
+                    scale_factor=scale_factor,
                 )
                 cv2.imwrite(annotated_path, annotated_img)
                 print(f"[DetectionService] 已标注差异区域: {len(failed_rois)} 个")
