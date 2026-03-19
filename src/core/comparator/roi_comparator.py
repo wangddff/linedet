@@ -54,10 +54,6 @@ class ROIComparator:
         for label, std_label_rois in std_rois_by_label.items():
             test_label_rois = test_rois_by_label.get(label, [])
 
-            print(
-                f"[ROI对比] 标签={label}, 标准图数量={len(std_label_rois)}, 待检图数量={len(test_label_rois)}"
-            )
-
             for i, std_roi in enumerate(std_label_rois):
                 std_crop = std_roi.get("roi")
                 if std_crop is None or std_crop.size == 0:
@@ -94,25 +90,8 @@ class ROIComparator:
 
                 similarity, diff_mask = self._compare_single_roi(std_crop, test_crop)
 
-                import cv2
-                import os
-
-                debug_dir = "data/debug_roi"
-                os.makedirs(debug_dir, exist_ok=True)
-                cv2.imwrite(f"{debug_dir}/std_{label}_{i}.png", std_crop)
-                cv2.imwrite(f"{debug_dir}/test_{label}_{i}.png", test_crop)
-
                 std_center = std_roi.get("center", [0, 0])
                 test_center = test_roi.get("center", [0, 0])
-                std_original_center = std_roi.get("original_center", [])
-                test_original_center = test_roi.get("original_center", [])
-                std_bbox = std_roi.get("bbox")
-                test_bbox = test_roi.get("bbox")
-                std_shape = std_roi.get("roi_shape")
-                test_shape = test_roi.get("roi_shape")
-                print(
-                    f"  [{label} #{i}] 相似度={similarity:.3f}, std_center={std_center}, test_center={test_center}, std_bbox={std_bbox}, test_bbox={test_bbox}, std_shape={std_shape}, test_shape={test_shape}"
-                )
 
                 compared_results.append(
                     {

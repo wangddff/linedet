@@ -167,12 +167,6 @@ class DetectionService:
             std_preprocessor = ImagePreprocessor()
             std_preprocessed_img = std_preprocessor.preprocess(std_image_path)
             std_scale = std_preprocessor.get_scale_factor()
-            print(
-                f"[ROI对比] 标准图原始尺寸: 未知, 缩放后: {std_preprocessed_img.shape[1]}x{std_preprocessed_img.shape[0]}, std_scale={std_scale:.3f}"
-            )
-            print(
-                f"[ROI对比] 待检图缩放后: {preprocessed_img.shape[1]}x{preprocessed_img.shape[0]}, scale_factor={scale_factor:.3f}"
-            )
 
             if std_scale != 1.0:
                 if std_detect_area:
@@ -189,9 +183,6 @@ class DetectionService:
                 if std_detect_area:
                     offset_x = detect_area.bbox[0] - std_detect_area.bbox[0]
                     offset_y = detect_area.bbox[1] - std_detect_area.bbox[1]
-                    print(
-                        f"[ROI对比] detect_area={detect_area.bbox}, std_detect_area={std_detect_area.bbox}, offset=({offset_x}, {offset_y})"
-                    )
 
                     adjusted_std_rois = []
                     for roi in std_rois:
