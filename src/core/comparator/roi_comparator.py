@@ -248,6 +248,7 @@ class ROIComparator:
         failed_rois: List[Dict[str, Any]],
         color: tuple = (0, 0, 255),
         thickness: int = 2,
+        detect_area_offset: tuple = (0, 0),
     ) -> np.ndarray:
         """在图片上标注差异区域
 
@@ -256,23 +257,35 @@ class ROIComparator:
             failed_rois: 失败的 ROI 列表
             color: 标注颜色 (BGR)
             thickness: 线条粗细
+            detect_area_offset: 检测区偏移量 (offset_x, offset_y)，用于转换相对坐标到绝对坐标
 
         Returns:
             标注后的图片
         """
         result = image.copy()
+        offset_x, offset_y = detect_area_offset
 
         for roi_info in failed_rois:
             bbox = roi_info.get("test_bbox") or roi_info.get("std_bbox")
             if bbox:
                 x, y, w, h = bbox
-                cv2.rectangle(result, (x, y), (x + w, y + h), color, thickness)
+                abs_x = x + offset_x
+                abs_y = y + offset_y
+                cv2.rectangle(
+                    result, (abs_x, abs_y), (abs_x + w, abs_y + h), color, thickness
+                )
 
                 label = roi_info.get("label", "unknown")
                 sim = roi_info.get("similarity", 0)
                 text = f"{label}: {sim:.2f}"
                 cv2.putText(
-                    result, text, (x, y - 5), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1
+                    result,
+                    text,
+                    (abs_x, abs_y - 5),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    0.5,
+                    color,
+                    1,
                 )
 
         return result

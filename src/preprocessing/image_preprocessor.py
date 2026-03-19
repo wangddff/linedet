@@ -33,27 +33,20 @@ class ImagePreprocessor:
         return img
 
     def resize_to_standard(self, img: np.ndarray) -> np.ndarray:
-        """手机图片缩放至标准分辨率 (1920x1080)，确保ROI坐标精准匹配"""
+        """手机图片缩放至标准分辨率，直接按比例缩放，不填充黑边"""
         h, w = img.shape[:2]
 
         if h == self.STANDARD_HEIGHT and w == self.STANDARD_WIDTH:
             self._scale_factor = 1.0
             return img
 
-        scale = min(self.STANDARD_WIDTH / w, self.STANDARD_HEIGHT / h)
-        new_w, new_h = int(w * scale), int(h * scale)
+        scale = self.STANDARD_HEIGHT / h
+        new_w, new_h = int(w * scale), self.STANDARD_HEIGHT
 
-        resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_AREA)
-
-        result = np.zeros(
-            (self.STANDARD_HEIGHT, self.STANDARD_WIDTH, 3), dtype=np.uint8
-        )
-        y_offset = (self.STANDARD_HEIGHT - new_h) // 2
-        x_offset = (self.STANDARD_WIDTH - new_w) // 2
-        result[y_offset : y_offset + new_h, x_offset : x_offset + new_w] = resized
+        resized = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
 
         self._scale_factor = scale
-        return result
+        return resized
 
     def denoise(self, img: np.ndarray) -> np.ndarray:
         """轻量高斯模糊降噪，消除手机拍摄噪点"""

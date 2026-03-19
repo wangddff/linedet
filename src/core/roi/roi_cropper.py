@@ -45,15 +45,25 @@ class ROICropper:
     def adjust_roi_coords_to_detect_area(
         self, rois: List[ROI], detect_area: ROI
     ) -> List[ROI]:
-        """将 ROI 坐标转换到检测区子图的坐标系"""
+        """将 ROI 坐标转换到检测区子图的坐标系，并裁剪到检测区范围内"""
         if detect_area is None:
             return rois
 
         offset_x, offset_y = detect_area.bbox[0], detect_area.bbox[1]
+        da_w, da_h = detect_area.bbox[2], detect_area.bbox[3]
 
         adjusted_rois = []
         for roi in rois:
-            adjusted_points = [[p[0] - offset_x, p[1] - offset_y] for p in roi.points]
+            # 转换坐标
+            adjusted_points = []
+            for p in roi.points:
+                new_x = p[0] - offset_x
+                new_y = p[1] - offset_y
+                # 确保坐标在检测区范围内
+                new_x = max(0, min(new_x, da_w))
+                new_y = max(0, min(new_y, da_h))
+                adjusted_points.append([new_x, new_y])
+
             adjusted_roi = ROI(roi.label, adjusted_points, roi.group_id)
             adjusted_rois.append(adjusted_roi)
 

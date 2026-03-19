@@ -173,6 +173,16 @@ class DetectionService:
                     std_detect_area = std_detect_area.scale(scale_factor)
                 std_rois = [roi.scale(scale_factor) for roi in std_rois]
 
+            std_image_path = str(Path(labelme_dir) / "train_1.png")
+            std_preprocessor = ImagePreprocessor()
+            std_preprocessed_img = std_preprocessor.preprocess(std_image_path)
+            std_scale = std_preprocessor.get_scale_factor()
+
+            if std_scale != 1.0:
+                if std_detect_area:
+                    std_detect_area = std_detect_area.scale(std_scale)
+                std_rois = [roi.scale(std_scale) for roi in std_rois]
+
             if detect_area:
                 crop_result = roi_cropper.crop_with_detect_area(
                     preprocessed_img, detect_area, rois
@@ -181,13 +191,13 @@ class DetectionService:
                 test_roi_crops = crop_result["rois"]
 
                 std_crop_result = roi_cropper.crop_with_detect_area(
-                    preprocessed_img, std_detect_area, std_rois
+                    std_preprocessed_img, std_detect_area, std_rois
                 )
                 std_detect_area_img = std_crop_result["detect_area_img"]
                 std_roi_crops = std_crop_result["rois"]
             else:
                 test_detect_area_img = preprocessed_img
-                std_detect_area_img = preprocessed_img
+                std_detect_area_img = std_preprocessed_img
                 std_roi_crops = roi_cropper.crop_multiple(std_detect_area_img, std_rois)
                 test_roi_crops = roi_cropper.crop_multiple(test_detect_area_img, rois)
 
@@ -257,8 +267,18 @@ class DetectionService:
 
                 annotated_img = cv2.imread(annotated_path)
                 failed_rois = roi_compare_result.get("failed_rois", [])
+
+                detect_area_offset = (
+                    (detect_area.bbox[0], detect_area.bbox[1])
+                    if detect_area
+                    else (0, 0)
+                )
                 annotated_img = roi_comparator.mark_diff_areas(
-                    annotated_img, failed_rois, color=(0, 0, 255), thickness=2
+                    annotated_img,
+                    failed_rois,
+                    color=(0, 0, 255),
+                    thickness=2,
+                    detect_area_offset=detect_area_offset,
                 )
                 cv2.imwrite(annotated_path, annotated_img)
                 print(f"[DetectionService] 已标注差异区域: {len(failed_rois)} 个")
