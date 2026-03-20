@@ -5,7 +5,12 @@ from pathlib import Path
 
 
 class ColorDetector:
-    """颜色检测模块 - 线材颜色检测、线径检测"""
+    """颜色检测模块 - 线材颜色检测、线径检测
+
+    使用方法：
+    1. 标准图和待检图使用相同的 wire ROI 区域
+    2. 按 ROI 位置排序后一一对比
+    """
 
     WIRE_COLORS = {
         "红色": {
@@ -92,11 +97,22 @@ class ColorDetector:
 
     PIXEL_TO_MM_RATIO = 0.05
 
-    def __init__(self, station_id: Optional[int] = None):
+    def __init__(
+        self,
+        station_id: Optional[int] = None,
+        std_wire_rois: Optional[List[Dict]] = None,
+        scale_factor: float = 1.0,
+    ):
         self.hsv_image = None
         self.station_id = station_id
         self.standard_colors = {}
-        if station_id:
+        self.std_wire_rois = std_wire_rois
+
+        if station_id and std_wire_rois:
+            self.standard_colors = self._extract_standard_colors_from_rois(
+                std_wire_rois, scale_factor
+            )
+        elif station_id:
             self.standard_colors = self._load_standard_colors(station_id)
 
     def _load_standard_colors(self, station_id: int) -> Dict[str, Any]:
@@ -131,6 +147,54 @@ class ColorDetector:
 
                 print(f"[ColorDetector] 标准图颜色提取完成: {standard_colors}")
 
+        return standard_colors
+
+    def _extract_standard_colors_from_rois(
+        self, std_wire_rois: List[Dict], scale_factor: float = 1.0
+    ) -> Dict[str, Any]:
+        """从标准图的 wire ROI 区域提取标准颜色
+
+        使用与待检图相同的 ROI 区域来提取颜色，确保对比的是同一个位置
+        使用原始图像（不经过预处理）以保持颜色准确
+        """
+        standard_colors = {}
+
+        if not std_wire_rois:
+            return standard_colors
+
+        std_image_path = "datasets/images/train/train_1.png"
+        std_img = cv2.imread(std_image_path)
+
+        if std_img is None:
+            print(f"[ColorDetector] 无法读取标准图: {std_image_path}")
+            return standard_colors
+
+        if scale_factor != 1.0:
+            h, w = std_img.shape[:2]
+            new_w = int(w * scale_factor)
+            new_h = int(h * scale_factor)
+            std_img = cv2.resize(
+                std_img, (new_w, new_h), interpolation=cv2.INTER_LINEAR
+            )
+
+        std_rois_sorted = sorted(
+            std_wire_rois, key=lambda r: r.get("center", [0, 0])[0]
+        )
+
+        for i, roi_info in enumerate(std_rois_sorted):
+            roi_img = roi_info.get("roi")
+            if roi_img is None or roi_img.size == 0:
+                continue
+
+            color_result = self._detect_roi_color(roi_img)
+            if color_result:
+                standard_colors[f"wire_{i}"] = {
+                    "color": color_result.get("color", "未知"),
+                    "position": roi_info.get("center", (0, 0)),
+                    "hsv": color_result.get("hsv"),
+                }
+
+        print(f"[ColorDetector] 从ROI提取的标准颜色: {standard_colors}")
         return standard_colors
 
     def _detect_wire_regions(self, hsv_img: np.ndarray) -> List[Dict[str, Any]]:
@@ -224,9 +288,20 @@ class ColorDetector:
         return detected_color or "未知"
 
     def detect(
-        self, image_path: str, wire_rois: Optional[List[Dict]] = None
+        self,
+        image_path: str,
+        wire_rois: Optional[List[Dict]] = None,
+        use_original_image: bool = False,
+        scale_factor: float = 1.0,
     ) -> Dict[str, Any]:
-        """执行颜色检测"""
+        """执行颜色检测
+
+        Args:
+            image_path: 图片路径
+            wire_rois: wire ROI 列表
+            use_original_image: 是否使用原始图像（不经过预处理）以保持颜色准确
+            scale_factor: 图像缩放因子，用于从原始图像裁剪 ROI
+        """
         if wire_rois is None:
             wire_rois = []
 
@@ -239,13 +314,32 @@ class ColorDetector:
                 "wire_diameters": [],
             }
 
+        if use_original_image and scale_factor != 1.0:
+            h, w = img.shape[:2]
+            new_w = int(w * scale_factor)
+            new_h = int(h * scale_factor)
+            img = cv2.resize(img, (new_w, new_h), interpolation=cv2.INTER_LINEAR)
+
         self.hsv_image = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
         results = []
 
         if wire_rois:
             for roi_info in wire_rois:
-                roi_img = roi_info.get("roi")
+                if use_original_image:
+                    bbox = roi_info.get("bbox")
+                    if bbox:
+                        x, y, bw, bh = bbox
+                        x = int(x / scale_factor) if scale_factor != 1.0 else x
+                        y = int(y / scale_factor) if scale_factor != 1.0 else y
+                        bw = int(bw / scale_factor) if scale_factor != 1.0 else bw
+                        bh = int(bh / scale_factor) if scale_factor != 1.0 else bh
+                        roi_img = img[y : y + bh, x : x + bw]
+                    else:
+                        roi_img = roi_info.get("roi")
+                else:
+                    roi_img = roi_info.get("roi")
+
                 if roi_img is None or roi_img.size == 0:
                     continue
 
