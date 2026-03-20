@@ -252,6 +252,7 @@ class DetectionService:
             station_id=task.station_id,
             std_wire_rois=std_wire_rois,
             scale_factor=scale_factor,
+            test_wire_rois=wire_rois,
         )
         color_result = color_det.detect(
             task.image_path,
