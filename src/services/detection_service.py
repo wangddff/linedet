@@ -157,6 +157,7 @@ class DetectionService:
         from src.core.comparator.roi_comparator import ROIComparator
         from src.core.roi import ROILoader, ROICropper
 
+        std_scale = 1.0
         std_json_path = Path(labelme_dir) / "train_1.json"
         if std_json_path.exists():
             std_roi_data = roi_loader.load_from_labelme(str(std_json_path))
@@ -252,6 +253,7 @@ class DetectionService:
             station_id=task.station_id,
             std_wire_rois=std_wire_rois,
             scale_factor=scale_factor,
+            std_scale_factor=std_scale if "std_scale" in dir() else scale_factor,
             test_wire_rois=wire_rois,
         )
         color_result = color_det.detect(

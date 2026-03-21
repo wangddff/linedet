@@ -1,7 +1,10 @@
 import cv2
 import numpy as np
+import os
 from typing import List, Dict, Any, Optional
 from pathlib import Path
+
+DEBUG_SAVE_ROI_IMAGES = True
 
 
 class ROIComparator:
@@ -51,6 +54,11 @@ class ROIComparator:
         test_rois_by_label = self._group_rois_by_label(test_rois)
         std_rois_by_label = self._group_rois_by_label(std_rois)
 
+        debug_dir = None
+        if DEBUG_SAVE_ROI_IMAGES:
+            debug_dir = "data/debug_roi"
+            os.makedirs(debug_dir, exist_ok=True)
+
         for label, std_label_rois in std_rois_by_label.items():
             test_label_rois = test_rois_by_label.get(label, [])
 
@@ -59,7 +67,15 @@ class ROIComparator:
                 if std_crop is None or std_crop.size == 0:
                     continue
 
+                if DEBUG_SAVE_ROI_IMAGES:
+                    cv2.imwrite(f"{debug_dir}/std_{label}_{i}.png", std_crop)
+
                 test_roi = test_label_rois[i] if i < len(test_label_rois) else None
+
+                if DEBUG_SAVE_ROI_IMAGES and test_roi is not None:
+                    test_crop = test_roi.get("roi")
+                    if test_crop is not None and test_crop.size > 0:
+                        cv2.imwrite(f"{debug_dir}/test_{label}_{i}.png", test_crop)
 
                 if test_roi is None:
                     compared_results.append(

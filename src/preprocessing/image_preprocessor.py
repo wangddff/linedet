@@ -27,8 +27,9 @@ class ImagePreprocessor:
         img = self.resize_to_standard(img)
         img = self.denoise(img)
         img = self._correct_distortion(img)
-        img = self._enhance_contrast(img)
-        img = self._auto_white_balance(img)
+        # 跳过颜色相关的处理，保留原始颜色用于颜色检测
+        # img = self._enhance_contrast(img)
+        # img = self._auto_white_balance(img)
 
         return img
 

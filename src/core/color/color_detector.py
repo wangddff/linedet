@@ -102,6 +102,7 @@ class ColorDetector:
         station_id: Optional[int] = None,
         std_wire_rois: Optional[List[Dict]] = None,
         scale_factor: float = 1.0,
+        std_scale_factor: float = 1.0,
         test_wire_rois: Optional[List[Dict]] = None,
     ):
         self.hsv_image = None
@@ -112,7 +113,7 @@ class ColorDetector:
 
         if station_id and std_wire_rois:
             self.standard_colors = self._extract_standard_colors_from_rois(
-                std_wire_rois, scale_factor, test_wire_rois
+                std_wire_rois, std_scale_factor, test_wire_rois
             )
         elif station_id:
             self.standard_colors = self._load_standard_colors(station_id)
@@ -154,20 +155,15 @@ class ColorDetector:
     def _extract_standard_colors_from_rois(
         self,
         std_wire_rois: List[Dict],
-        scale_factor: float = 1.0,
+        std_scale_factor: float = 1.0,
         test_wire_rois: Optional[List[Dict]] = None,
     ) -> Dict[str, Any]:
         """从标准图的 wire ROI 区域提取标准颜色
 
         Args:
             std_wire_rois: 标准图的 wire ROI 列表
-            scale_factor: 图像缩放因子
-            test_wire_rois: 待检图的 wire ROI 列表（用于调试输出）
-        """
-        """从标准图的 wire ROI 区域提取标准颜色
-
-        使用与待检图相同的 ROI 区域来提取颜色，确保对比的是同一个位置
-        使用原始图像（不经过预处理）以保持颜色准确
+            std_scale_factor: 标准图的缩放因子（用于坐标转换）
+            test_wire_rois: 待检图的 wire ROI 列表
         """
         import os
 
@@ -175,6 +171,158 @@ class ColorDetector:
 
         if not std_wire_rois:
             return standard_colors
+
+        debug_dir = "data/debug_color"
+        os.makedirs(debug_dir, exist_ok=True)
+
+        std_image_path = "datasets/images/train/train_1.png"
+        std_img = cv2.imread(std_image_path)
+
+        if std_img is None:
+            print(f"[ColorDetector] 无法读取标准图: {std_image_path}")
+            return standard_colors
+
+        std_rois_by_group = {}
+        for roi_info in std_wire_rois:
+            gid = roi_info.get("group_id", 0)
+            std_rois_by_group[gid] = roi_info
+
+        test_rois_by_group = {}
+        if test_wire_rois:
+            for roi_info in test_wire_rois:
+                gid = roi_info.get("group_id", 0)
+                test_rois_by_group[gid] = roi_info
+
+        print(
+            f"[ColorDetector] std_wire_rois 按 group_id 分组: {list(std_rois_by_group.keys())}"
+        )
+        print(
+            f"[ColorDetector] test_wire_rois 按 group_id 分组: {list(test_rois_by_group.keys())}"
+        )
+
+        for gid in sorted(std_rois_by_group.keys()):
+            roi_info = std_rois_by_group[gid]
+            test_roi = test_rois_by_group.get(gid)
+            print(
+                f"[ColorDetector] std_wire group_id={gid}, test_wire exists={test_roi is not None}"
+            )
+
+            bbox = roi_info.get("bbox")
+
+            if not bbox:
+                roi_img = roi_info.get("roi")
+                if roi_img is None or roi_img.size == 0:
+                    continue
+            else:
+                x, y, bw, bh = bbox
+                if std_scale_factor != 1.0:
+                    x = int(x / std_scale_factor)
+                    y = int(y / std_scale_factor)
+                    bw = int(bw / std_scale_factor)
+                    bh = int(bh / std_scale_factor)
+                h, w = std_img.shape[:2]
+                x = max(0, min(x, w - 1))
+                y = max(0, min(y, h - 1))
+                bw = max(1, min(bw, w - x))
+                bh = max(1, min(bh, h - y))
+                roi_img = std_img[y : y + bh, x : x + bw]
+
+            if roi_img is None or roi_img.size == 0:
+                continue
+
+            cv2.imwrite(f"{debug_dir}/std_wire_g{gid}.png", roi_img)
+
+            color_result = self._detect_roi_color(roi_img)
+            if color_result:
+                standard_colors[f"wire_{gid}"] = {
+                    "color": color_result.get("color", "未知"),
+                    "position": roi_info.get("center", (0, 0)),
+                    "hsv": color_result.get("hsv"),
+                    "group_id": gid,
+                }
+
+        print(f"[ColorDetector] 从ROI提取的标准颜色: {standard_colors}")
+        return standard_colors
+
+        debug_dir = "data/debug_color"
+        os.makedirs(debug_dir, exist_ok=True)
+
+        std_image_path = "datasets/images/train/train_1.png"
+        std_img = cv2.imread(std_image_path)
+
+        if std_img is None:
+            print(f"[ColorDetector] 无法读取标准图: {std_image_path}")
+            return standard_colors
+
+        std_rois_sorted = sorted(
+            std_wire_rois,
+            key=lambda r: r.get("original_center", r.get("center", [0, 0]))[0],
+        )
+
+        print(f"[ColorDetector] std_wire_rois 数量: {len(std_wire_rois)}")
+        if test_wire_rois:
+            test_rois_sorted = sorted(
+                test_wire_rois,
+                key=lambda r: r.get("original_center", r.get("center", [0, 0]))[0],
+            )
+            print(f"[ColorDetector] test_wire_rois 数量: {len(test_wire_rois)}")
+            for i, roi in enumerate(test_rois_sorted):
+                center = roi.get("original_center", roi.get("center", [0, 0]))
+                print(f"[ColorDetector] test_wire_sorted_{i}: center={center}")
+
+        print(
+            f"[ColorDetector] std_img 原始尺寸: {std_img.shape[1]}x{std_img.shape[0]}"
+        )
+        print(f"[ColorDetector] scale_factor: {scale_factor}")
+
+        for i, roi_info in enumerate(std_rois_sorted):
+            bbox = roi_info.get("bbox")
+            center = roi_info.get("center", [0, 0])
+            print(f"[ColorDetector] std_wire_{i}: bbox={bbox}, center={center}")
+
+            if not bbox:
+                roi_img = roi_info.get("roi")
+                print(
+                    f"[ColorDetector] std_wire_{i}: 使用预裁剪的 ROI, shape={roi_img.shape if roi_img is not None else None}"
+                )
+                if roi_img is None or roi_img.size == 0:
+                    continue
+            else:
+                x, y, bw, bh = bbox
+                original_x, original_y = x, y
+                if scale_factor != 1.0:
+                    x = int(x / scale_factor)
+                    y = int(y / scale_factor)
+                    bw = int(bw / scale_factor)
+                    bh = int(bh / scale_factor)
+                h, w = std_img.shape[:2]
+                print(
+                    f"[ColorDetector] std_wire_{i}: 转换后坐标=({x}, {y}, {bw}, {bh}), 原图尺寸={w}x{h}"
+                )
+                x = max(0, min(x, w - 1))
+                y = max(0, min(y, h - 1))
+                bw = max(1, min(bw, w - x))
+                bh = max(1, min(bh, h - y))
+                roi_img = std_img[y : y + bh, x : x + bw]
+                print(
+                    f"[ColorDetector] std_wire_{i}: 裁剪后 shape={roi_img.shape if roi_img is not None else None}"
+                )
+
+            if roi_img is None or roi_img.size == 0:
+                continue
+
+            cv2.imwrite(f"{debug_dir}/std_wire_{i}.png", roi_img)
+
+            color_result = self._detect_roi_color(roi_img)
+            if color_result:
+                standard_colors[f"wire_{i}"] = {
+                    "color": color_result.get("color", "未知"),
+                    "position": roi_info.get("center", (0, 0)),
+                    "hsv": color_result.get("hsv"),
+                }
+
+        print(f"[ColorDetector] 从ROI提取的标准颜色: {standard_colors}")
+        return standard_colors
 
         debug_dir = "data/debug_color"
         os.makedirs(debug_dir, exist_ok=True)
@@ -388,29 +536,23 @@ class ColorDetector:
             debug_dir = "data/debug_color"
             os.makedirs(debug_dir, exist_ok=True)
 
-            wire_rois_sorted = sorted(
-                wire_rois,
-                key=lambda r: r.get("original_center", r.get("center", [0, 0]))[0],
-            )
+            wire_rois_by_group = {}
+            for roi_info in wire_rois:
+                gid = roi_info.get("group_id", 0)
+                wire_rois_by_group[gid] = roi_info
 
-            for i, roi_info in enumerate(wire_rois_sorted):
+            for gid in sorted(wire_rois_by_group.keys()):
+                roi_info = wire_rois_by_group[gid]
                 bbox = roi_info.get("bbox")
-                center = roi_info.get("center", [0, 0])
-                print(f"[ColorDetector] test_wire_{i}: bbox={bbox}, center={center}")
+                print(f"[ColorDetector] test_wire group_id={gid}: bbox={bbox}")
 
                 if use_original_image:
                     if bbox:
                         x, y, bw, bh = bbox
-                        print(
-                            f"[ColorDetector] test_wire_{i}: 原始bbox=({x}, {y}, {bw}, {bh}), scale_factor={scale_factor}"
-                        )
                         x = int(x / scale_factor) if scale_factor != 1.0 else x
                         y = int(y / scale_factor) if scale_factor != 1.0 else y
                         bw = int(bw / scale_factor) if scale_factor != 1.0 else bw
                         bh = int(bh / scale_factor) if scale_factor != 1.0 else bh
-                        print(
-                            f"[ColorDetector] test_wire_{i}: 转换后坐标=({x}, {y}, {bw}, {bh})"
-                        )
                         h, w = img.shape[:2]
                         x = max(0, min(x, w - 1))
                         y = max(0, min(y, h - 1))
@@ -418,20 +560,16 @@ class ColorDetector:
                         bh = max(1, min(bh, h - y))
                         roi_img = img[y : y + bh, x : x + bw]
                         print(
-                            f"[ColorDetector] test_wire_{i}: 裁剪后 shape={roi_img.shape if roi_img is not None else None}"
+                            f"[ColorDetector] test_wire group_id={gid}: 裁剪后 shape={roi_img.shape}"
                         )
+                        cv2.imwrite(f"{debug_dir}/test_wire_g{gid}.png", roi_img)
                     else:
                         roi_img = roi_info.get("roi")
-                        print(
-                            f"[ColorDetector] test_wire_{i}: 使用预裁剪的 ROI, shape={roi_img.shape if roi_img is not None else None}"
-                        )
                 else:
                     roi_img = roi_info.get("roi")
 
                 if roi_img is None or roi_img.size == 0:
                     continue
-
-                cv2.imwrite(f"{debug_dir}/test_wire_{i}.png", roi_img)
 
                 color_result = self._detect_roi_color(roi_img)
                 if color_result:
