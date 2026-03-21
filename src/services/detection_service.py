@@ -244,24 +244,22 @@ class DetectionService:
         from src.core.color.color_detector import ColorDetector
 
         std_wire_rois = None
+        test_wire_rois = None
         if "std_roi_crops" in dir() and std_roi_crops:
             std_wire_rois = [
                 r for r in std_roi_crops if r.get("label") in ["wire", "short_wire"]
+            ]
+        if "test_roi_crops" in dir() and test_roi_crops:
+            test_wire_rois = [
+                r for r in test_roi_crops if r.get("label") in ["wire", "short_wire"]
             ]
 
         color_det = ColorDetector(
             station_id=task.station_id,
             std_wire_rois=std_wire_rois,
-            scale_factor=scale_factor,
-            std_scale_factor=std_scale if "std_scale" in dir() else scale_factor,
-            test_wire_rois=wire_rois,
+            test_wire_rois=test_wire_rois,
         )
-        color_result = color_det.detect(
-            task.image_path,
-            wire_rois,
-            use_original_image=True,
-            scale_factor=scale_factor,
-        )
+        color_result = color_det.detect()
         results["color"] = color_result
 
         from src.core.validator.rule_validator import RuleValidator
