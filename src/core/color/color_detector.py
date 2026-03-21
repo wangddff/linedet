@@ -102,12 +102,14 @@ class ColorDetector:
         station_id: Optional[int] = None,
         std_wire_rois: Optional[List[Dict]] = None,
         test_wire_rois: Optional[List[Dict]] = None,
+        scale_factor: float = 1.0,
     ):
         self.hsv_image = None
         self.station_id = station_id
         self.standard_colors = {}
         self.std_wire_rois = std_wire_rois
         self.test_wire_rois = test_wire_rois
+        self.scale_factor = scale_factor
 
         if station_id and std_wire_rois:
             self.standard_colors = self._extract_standard_colors_from_rois(
@@ -486,7 +488,17 @@ class ColorDetector:
 
             color_result = self._detect_roi_color(roi_img)
             if color_result:
-                color_result["bbox"] = roi_info.get("bbox")
+                bbox = roi_info.get("original_bbox") or roi_info.get("bbox")
+                if bbox and self.scale_factor != 1.0:
+                    x, y, bw, bh = bbox
+                    bbox = [
+                        int(x / self.scale_factor),
+                        int(y / self.scale_factor),
+                        int(bw / self.scale_factor),
+                        int(bh / self.scale_factor),
+                    ]
+                color_result["bbox"] = bbox
+                color_result["group_id"] = gid
                 results.append(color_result)
 
         compare_result = self._compare_with_standard(results)
