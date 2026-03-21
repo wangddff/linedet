@@ -134,23 +134,23 @@ class ImageAnnotator:
                 img, "未识别到文字", (10, min(h - 30, error_y + 30)), "warning", 24
             )
 
-        detections = detect_result.get("detections", [])
-        for det in detections:
-            bbox = det.get("bbox", [])
-            if len(bbox) >= 4:
-                x, y, bw, bh = bbox[0], bbox[1], bbox[2], bbox[3]
-                cls_name = det.get("class_name", "")
-                img = self._draw_rectangle(img, (x, y), (x + bw, y + bh), "info", 2)
-                img = self._draw_text(img, cls_name, (x, y - 5), "info", 16)
+        # detections = detect_result.get("detections", [])
+        # for det in detections:
+        #     bbox = det.get("bbox", [])
+        #     if len(bbox) >= 4:
+        #         x, y, bw, bh = bbox[0], bbox[1], bbox[2], bbox[3]
+        #         cls_name = det.get("class_name", "")
+        #         img = self._draw_rectangle(img, (x, y), (x + bw, y + bh), "info", 2)
+        #         img = self._draw_text(img, cls_name, (x, y - 5), "info", 16)
 
-        color_list = color_result.get("colors", [])
-        for i, color_info in enumerate(color_list):
-            bbox = color_info.get("bbox", [])
-            if bbox and len(bbox) >= 4:
-                x, y, bw, bh = bbox[0], bbox[1], bbox[2], bbox[3]
-                color_name = color_info.get("color", "未知")
-                img = self._draw_rectangle(img, (x, y), (x + bw, y + bh), "success", 2)
-                img = self._draw_text(img, color_name, (x, y + bh + 5), "success", 16)
+        # color_list = color_result.get("colors", [])
+        # for i, color_info in enumerate(color_list):
+        #     bbox = color_info.get("bbox", [])
+        #     if bbox and len(bbox) >= 4:
+        #         x, y, bw, bh = bbox[0], bbox[1], bbox[2], bbox[3]
+        #         color_name = color_info.get("color", "未知")
+        #         img = self._draw_rectangle(img, (x, y), (x + bw, y + bh), "success", 2)
+        #         img = self._draw_text(img, color_name, (x, y + bh + 5), "success", 16)
 
         if output_path is None:
             input_name = Path(image_path).stem
