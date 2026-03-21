@@ -72,7 +72,7 @@ class DetectionService:
         roi_loader = ROILoader(station_id=task.station_id)
         labelme_dir = "datasets/images/train"
 
-        std_json_path = Path(labelme_dir) / "train_1.json"
+        std_json_path = Path(labelme_dir) / f"train_{task.station_id}.json"
         roi_data = roi_loader.load_from_labelme(str(std_json_path))
         detect_area = roi_data.get("detect_area")
         rois = roi_data.get("rois", [])
@@ -158,13 +158,13 @@ class DetectionService:
         from src.core.roi import ROILoader, ROICropper
 
         std_scale = 1.0
-        std_json_path = Path(labelme_dir) / "train_1.json"
+        std_json_path = Path(labelme_dir) / f"train_{task.station_id}.json"
         if std_json_path.exists():
             std_roi_data = roi_loader.load_from_labelme(str(std_json_path))
             std_detect_area = std_roi_data.get("detect_area")
             std_rois = std_roi_data.get("rois", [])
 
-            std_image_path = str(Path(labelme_dir) / "train_1.png")
+            std_image_path = str(Path(labelme_dir) / f"train_{task.station_id}.png")
             std_preprocessor = ImagePreprocessor()
             std_preprocessed_img = std_preprocessor.preprocess(std_image_path)
             std_scale = std_preprocessor.get_scale_factor()
