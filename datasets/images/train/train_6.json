@@ -93,72 +93,126 @@
       "mask": null
     },
     {
-      "label": "terminal_hole",
+      "label": "wire",
       "points": [
         [
-          341.0,
-          234.5
+          358.25,
+          252.5
         ],
         [
-          375.66666666666663,
-          281.16666666666663
+          386.25,
+          266.5
         ]
       ],
-      "group_id": 5,
+      "group_id": 21,
       "description": "",
       "shape_type": "rectangle",
       "flags": {},
       "mask": null
     },
     {
-      "label": "terminal_hole",
+      "label": "wire",
       "points": [
         [
-          343.0,
-          283.16666666666663
+          358.25,
+          267.0
         ],
         [
-          381.0,
-          341.8333333333333
+          386.25,
+          279.0
         ]
       ],
-      "group_id": 6,
+      "group_id": 22,
       "description": "",
       "shape_type": "rectangle",
       "flags": {},
       "mask": null
     },
     {
-      "label": "terminal_hole",
+      "label": "wire",
       "points": [
         [
-          344.33333333333337,
-          344.5
+          358.25,
+          280.5
         ],
         [
-          381.0,
-          408.5
+          386.25,
+          293.5
         ]
       ],
-      "group_id": 7,
+      "group_id": 23,
       "description": "",
       "shape_type": "rectangle",
       "flags": {},
       "mask": null
     },
     {
-      "label": "terminal_hole",
+      "label": "wire",
       "points": [
         [
-          345.0,
-          410.5
+          357.75,
+          294.0
         ],
         [
-          381.66666666666663,
-          546.5
+          386.75,
+          306.0
         ]
       ],
-      "group_id": 8,
+      "group_id": 24,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "wire",
+      "points": [
+        [
+          356.25,
+          399.5
+        ],
+        [
+          380.25,
+          414.5
+        ]
+      ],
+      "group_id": 25,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "wire",
+      "points": [
+        [
+          349.25,
+          516.5
+        ],
+        [
+          373.75,
+          531.0
+        ]
+      ],
+      "group_id": 26,
+      "description": "",
+      "shape_type": "rectangle",
+      "flags": {},
+      "mask": null
+    },
+    {
+      "label": "wire",
+      "points": [
+        [
+          350.25,
+          531.0
+        ],
+        [
+          374.75,
+          546.0
+        ]
+      ],
+      "group_id": 27,
       "description": "",
       "shape_type": "rectangle",
       "flags": {},

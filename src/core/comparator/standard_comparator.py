@@ -12,7 +12,31 @@ class StandardComparator:
         self.station_id = station_id
         self.product_id = product_id
         self.standards = self._load_standard_images()
-        self.threshold = 0.85
+        self.threshold = 0.4
+        self.detect_area = self._load_detect_area()
+
+    def _load_detect_area(self):
+        """从 train_X.json 加载 detect_area"""
+        from pathlib import Path
+        from src.core.roi.roi_loader import ROILoader
+
+        labelme_dir = Path("datasets/images/train")
+        json_path = labelme_dir / f"train_{self.station_id}.json"
+
+        if not json_path.exists():
+            print(f"[StandardComparator] 标注文件不存在: {json_path}")
+            return None
+
+        roi_loader = ROILoader(station_id=self.station_id)
+        data = roi_loader.load_from_labelme(str(json_path))
+        detect_area = data.get("detect_area")
+
+        if detect_area:
+            print(f"[StandardComparator] 已加载 detect_area: bbox={detect_area.bbox}")
+        else:
+            print(f"[StandardComparator] 未检测到 detect_area，将使用整图对比")
+
+        return detect_area
 
     def _load_standard_images(self) -> List[str]:
         """加载该工位的所有标准图"""
@@ -80,6 +104,13 @@ class StandardComparator:
 
         img = self._resize_to_match(img, std_img)
 
+        if self.detect_area is not None:
+            from src.core.roi.roi_cropper import ROICropper
+
+            cropper = ROICropper()
+            img = cropper.crop_detect_area(img, self.detect_area)
+            std_img = cropper.crop_detect_area(std_img, self.detect_area)
+
         targets1 = self._extract_features(img)
         targets2 = self._extract_features(std_img)
 
@@ -100,6 +131,7 @@ class StandardComparator:
             "standard_count": len(targets2),
             "matched_count": match_result["matched_count"],
             "position_errors": match_result["position_errors"],
+            "used_detect_area": self.detect_area is not None,
             "details": match_result,
         }
 
