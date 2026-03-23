@@ -12,6 +12,7 @@ services:
       - ./config:/app/config
       - ./datasets:/app/datasets
       - ./data/exports:/app/data/exports
+      - ./linedet.db:/app/linedet.db
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
