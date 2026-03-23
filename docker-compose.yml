@@ -11,11 +11,12 @@ services:
       - ./models:/app/models
       - ./config:/app/config
       - ./datasets:/app/datasets
+      - ./data/exports:/app/data/exports
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/docs"]
+      test: ["CMD", "curl", "-f", "http://localhost:8200/docs"]
       interval: 30s
       timeout: 10s
       retries: 3
