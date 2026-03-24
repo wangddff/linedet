@@ -67,6 +67,38 @@ class DetectionService:
         print(f"缩放因子: {scale_factor:.3f}")
         print(f"================================\n")
 
+        from src.core.alignment.image_aligner import ImageAligner
+
+        aligner = ImageAligner(task.station_id)
+        align_result = aligner.align(task.image_path)
+
+        aligned_image_path = task.image_path
+        if align_result.get("success"):
+            print(f"\n========== SIFT对齐 ==========")
+            print(f"匹配点数: {align_result.get('match_count')}")
+            print(f"置信度: {align_result.get('confidence'):.2f}")
+            print(f"耗时: {align_result.get('elapsed_ms'):.0f}ms")
+            print(f"4角点映射: {align_result.get('corners_mapped')}")
+            print(f"=========================\n")
+
+            aligned_image = align_result["aligned_image"]
+            import os
+
+            temp_dir = Path("data/temp")
+            temp_dir.mkdir(parents=True, exist_ok=True)
+            aligned_image_path = str(
+                temp_dir / f"aligned_{task.station_id}_{Path(task.image_path).stem}.png"
+            )
+            cv2.imwrite(aligned_image_path, aligned_image)
+            print(f"[DetectionService] 已保存对齐后的图像: {aligned_image_path}")
+        else:
+            print(f"\n========== SIFT对齐 ==========")
+            print(f"对齐失败: {align_result.get('error')}")
+            print(f"使用原图继续检测")
+            print(f"=========================\n")
+
+        results["alignment"] = align_result
+
         from src.core.roi import ROILoader, ROICropper
 
         roi_loader = ROILoader(station_id=task.station_id)
@@ -142,7 +174,7 @@ class DetectionService:
         from src.core.comparator.standard_comparator import StandardComparator
 
         comparator = StandardComparator(task.station_id, task.product_id)
-        compare_result = comparator.compare(task.image_path)
+        compare_result = comparator.compare(aligned_image_path)
         results["comparator"] = compare_result
 
         if not compare_result.get("passed", False):
@@ -238,7 +270,7 @@ class DetectionService:
         ocr = TextRecognizer()
 
         all_rois_for_ocr = number_tube_rois + terminal_rois
-        ocr_result = ocr.recognize(task.image_path, all_rois_for_ocr)
+        ocr_result = ocr.recognize(aligned_image_path, all_rois_for_ocr)
         results["ocr"] = ocr_result
 
         from src.core.color.color_detector import ColorDetector
@@ -284,7 +316,7 @@ class DetectionService:
 
         try:
             annotated_path = annotator.annotate_image(
-                task.image_path,
+                aligned_image_path,
                 detection_result,
                 ocr_result,
                 color_result,
