@@ -27,4 +27,4 @@ services:
 
 networks:
   linedet-network:
-    external: true
+    name: linedet-network
