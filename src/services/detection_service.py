@@ -297,7 +297,8 @@ class DetectionService:
                 std_roi_crops = roi_cropper.crop_multiple(std_detect_area_img, std_rois)
                 test_roi_crops = roi_cropper.crop_multiple(test_detect_area_img, rois)
 
-            roi_comparator = ROIComparator(similarity_threshold=0.8)
+            from src.utils.config import get_roi_similarity_threshold
+            roi_comparator = ROIComparator(similarity_threshold=get_roi_similarity_threshold())
             roi_compare_result = roi_comparator.compare_roi_regions(
                 std_detect_area_img,
                 test_detect_area_img,

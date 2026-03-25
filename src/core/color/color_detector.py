@@ -557,8 +557,8 @@ class ColorDetector:
         current_color_list = [c.get("color") for c in current_colors]
         standard_color_list = [v.get("color") for v in std_entries]
 
-        HSV_DIST_THRESHOLD_CHROMA = 0.25   # 彩色线材容差
-        HSV_DIST_THRESHOLD_ACHROMA = 0.18  # 灰/黑/白 容差（亮度差异更敏感）
+        from src.utils.config import get_color_hsv_thresholds
+        HSV_DIST_THRESHOLD_CHROMA, HSV_DIST_THRESHOLD_ACHROMA = get_color_hsv_thresholds()
 
         if len(current_color_list) < len(standard_color_list):
             errors.append(
