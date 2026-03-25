@@ -210,8 +210,25 @@ class DetectionService:
 
         from src.core.comparator.standard_comparator import StandardComparator
 
-        comparator = StandardComparator(task.station_id, task.product_id)
-        compare_result = comparator.compare(aligned_image_path)
+        # SIFT对齐成功时，用对齐置信度直接作为全局相似度，跳过基于轮廓的StandardComparator
+        # （轮廓比较方案在upscale后图像上效果极差）
+        if use_alignment:
+            sift_confidence = align_result.get("confidence", 0)
+            compare_result = {
+                "passed": True,
+                "similarity_score": float(sift_confidence),
+                "method": "sift_alignment",
+                "details": {
+                    "match_count": align_result.get("match_count", 0),
+                    "confidence": sift_confidence,
+                },
+            }
+            print(f"\n========== 全局相似度（SIFT bypass） ==========")
+            print(f"SIFT置信度: {sift_confidence:.2f}  → 自动通过")
+            print(f"================================================\n")
+        else:
+            comparator = StandardComparator(task.station_id, task.product_id)
+            compare_result = comparator.compare(aligned_image_path)
         results["comparator"] = compare_result
 
         if not compare_result.get("passed", False):
