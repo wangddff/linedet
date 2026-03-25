@@ -57,9 +57,9 @@ class ImageAligner:
 
         try:
             try:
-                self.sift = cv2.SIFT_create()
+                self.sift = cv2.SIFT_create(nfeatures=2000)
             except AttributeError:
-                self.sift = cv2.xfeatures2d.SIFT_create()
+                self.sift = cv2.xfeatures2d.SIFT_create(nfeatures=2000)
 
             std_gray = self._preprocess_for_matching(self.std_img)
             self.std_kp, self.std_des = self.sift.detectAndCompute(std_gray, None)
@@ -91,9 +91,9 @@ class ImageAligner:
                 return False
 
             try:
-                self.sift = cv2.SIFT_create()
+                self.sift = cv2.SIFT_create(nfeatures=2000)
             except AttributeError:
-                self.sift = cv2.xfeatures2d.SIFT_create()
+                self.sift = cv2.xfeatures2d.SIFT_create(nfeatures=2000)
 
             std_gray = self._preprocess_for_matching(self.std_img)
             self.std_kp, self.std_des = self.sift.detectAndCompute(std_gray, None)
@@ -134,9 +134,9 @@ class ImageAligner:
             return self._fail_result("标准图像无效")
 
         try:
-            self.sift = cv2.SIFT_create()
+            self.sift = cv2.SIFT_create(nfeatures=2000)
         except AttributeError:
-            self.sift = cv2.xfeatures2d.SIFT_create()
+            self.sift = cv2.xfeatures2d.SIFT_create(nfeatures=2000)
 
         self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
@@ -224,9 +224,9 @@ class ImageAligner:
             return self._fail_result("标准图像无效")
 
         try:
-            self.sift = cv2.SIFT_create()
+            self.sift = cv2.SIFT_create(nfeatures=2000)
         except AttributeError:
-            self.sift = cv2.xfeatures2d.SIFT_create()
+            self.sift = cv2.xfeatures2d.SIFT_create(nfeatures=2000)
 
         self.matcher = cv2.BFMatcher(cv2.NORM_L2, crossCheck=False)
 
