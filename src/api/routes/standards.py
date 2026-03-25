@@ -1,18 +1,17 @@
-from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
-from sqlalchemy.orm import Session
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from typing import List
 from pydantic import BaseModel
 import os
 import shutil
 
-from src.database import get_db
-from src.database.models import StandardImage
 from src.utils.config import load_config
 
 router = APIRouter()
 
 config = load_config()
 STANDARD_DIR = config["storage"]["standard_images"]
+
+IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".bmp"}
 
 
 class StandardImageResponse(BaseModel):
@@ -25,32 +24,31 @@ class StandardImageResponse(BaseModel):
     description: str | None
     created_at: str
 
-    class Config:
-        from_attributes = True
-
 
 @router.get("/{station_id}", response_model=List[StandardImageResponse])
-async def list_standard_images(
-    station_id: int, product_id: int | None = None, db: Session = Depends(get_db)
-):
-    query = db.query(StandardImage).filter(StandardImage.station_id == station_id)
-    if product_id:
-        query = query.filter(StandardImage.product_id == product_id)
+async def list_standard_images(station_id: int, product_id: int | None = None):
+    """从文件系统扫描标准图，无需数据库。"""
+    station_dir = os.path.join(STANDARD_DIR, f"station_{station_id}")
+    if not os.path.isdir(station_dir):
+        return []
 
-    images = query.all()
-    return [
-        StandardImageResponse(
-            id=img.id,
-            station_id=img.station_id,
-            product_id=img.product_id,
-            file_path=img.file_path,
-            file_name=img.file_name,
-            similarity_threshold=float(img.similarity_threshold),
-            description=img.description,
-            created_at=img.created_at.isoformat() if img.created_at else "",
+    results = []
+    for idx, fname in enumerate(sorted(os.listdir(station_dir)), start=1):
+        if os.path.splitext(fname)[1].lower() not in IMAGE_EXTENSIONS:
+            continue
+        results.append(
+            StandardImageResponse(
+                id=idx,
+                station_id=station_id,
+                product_id=product_id,
+                file_path=os.path.join(station_dir, fname),
+                file_name=fname,
+                similarity_threshold=0.85,
+                description=None,
+                created_at="",
+            )
         )
-        for img in images
-    ]
+    return results
 
 
 @router.post("/{station_id}")
@@ -60,7 +58,6 @@ async def upload_standard_image(
     similarity_threshold: float = 0.85,
     description: str | None = None,
     file: UploadFile = File(...),
-    db: Session = Depends(get_db),
 ):
     station_dir = os.path.join(STANDARD_DIR, f"station_{station_id}")
     os.makedirs(station_dir, exist_ok=True)
@@ -71,31 +68,14 @@ async def upload_standard_image(
     with open(filepath, "wb") as f:
         shutil.copyfileobj(file.file, f)
 
-    db_image = StandardImage(
-        station_id=station_id,
-        product_id=product_id,
-        file_path=filepath,
-        file_name=filename,
-        similarity_threshold=similarity_threshold,
-        description=description,
-    )
-    db.add(db_image)
-    db.commit()
-    db.refresh(db_image)
-
-    return {"message": "标准图上传成功", "id": db_image.id, "file_path": filepath}
+    return {"message": "标准图上传成功", "file_name": filename, "file_path": filepath}
 
 
-@router.delete("/{image_id}")
-async def delete_standard_image(image_id: int, db: Session = Depends(get_db)):
-    image = db.query(StandardImage).filter(StandardImage.id == image_id).first()
-    if not image:
+@router.delete("/{station_id}/{file_name}")
+async def delete_standard_image(station_id: int, file_name: str):
+    filepath = os.path.join(STANDARD_DIR, f"station_{station_id}", file_name)
+    if not os.path.exists(filepath):
         raise HTTPException(status_code=404, detail="标准图不存在")
 
-    if os.path.exists(image.file_path):
-        os.remove(image.file_path)
-
-    db.delete(image)
-    db.commit()
-
+    os.remove(filepath)
     return {"message": "删除成功"}

@@ -32,6 +32,7 @@ app.include_router(wiring.router, prefix="/api/wiring", tags=["接线表管理"]
 
 app.mount("/static", StaticFiles(directory="web"), name="static")
 app.mount("/exports", StaticFiles(directory="data/exports"), name="exports")
+app.mount("/standards", StaticFiles(directory="data/standard_images"), name="standards")
 
 
 @app.get("/")
