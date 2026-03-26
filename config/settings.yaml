@@ -20,7 +20,14 @@ storage:
   max_upload_size: 10485760  # 10MB
 
 detection:
+  # 全局图像相似度阈值（标准图对比，SIFT bypass后不使用）
   similarity_threshold: 0.85
+  # ROI 区域相似度阈值：低于此值的 ROI 被标红（0~1，越高越严格）
+  roi_similarity_threshold: 0.65
+  # 颜色检测 HSV 距离阈值（彩色线材）
+  color_hsv_threshold_chroma: 0.25
+  # 颜色检测 HSV 距离阈值（非彩色：灰/黑/白）
+  color_hsv_threshold_achroma: 0.18
   yolo_conf_threshold: 0.25
   yolo_iou_threshold: 0.45
   ocr_min_confidence: 0.6

@@ -72,7 +72,7 @@ class StandardComparator:
             }
 
         best_result = None
-        best_score = 0
+        best_score = -1.0  # 避免 score=0 时被 > 条件跳过
 
         for std_path in self.standards:
             result = self._compare_single(img, std_path)
@@ -102,14 +102,23 @@ class StandardComparator:
                 "details": {},
             }
 
-        img = self._resize_to_match(img, std_img)
+        # 计算坐标缩放比（原始标准图 → 当前工作分辨率）
+        orig_h, orig_w = std_img.shape[:2]
+        work_h, work_w = img.shape[:2]
+        coord_scale = work_h / orig_h if orig_h > 0 else 1.0
 
-        if self.detect_area is not None:
+        # 降采样标准图到待检图分辨率（不upscale待检图，避免模糊）
+        std_img = self._resize_to_match(img, std_img)
+
+        if self.detect_area is not None and coord_scale != 0:
             from src.core.roi.roi_cropper import ROICropper
 
+            scaled_da = self.detect_area.scale(coord_scale) if coord_scale != 1.0 else self.detect_area
             cropper = ROICropper()
-            img = cropper.crop_detect_area(img, self.detect_area)
-            std_img = cropper.crop_detect_area(std_img, self.detect_area)
+            img_crop = cropper.crop_detect_area(img, scaled_da)
+            std_crop = cropper.crop_detect_area(std_img, scaled_da)
+            img = img_crop if img_crop is not None and img_crop.size > 0 else img
+            std_img = std_crop if std_crop is not None and std_crop.size > 0 else std_img
 
         targets1 = self._extract_features(img)
         targets2 = self._extract_features(std_img)
@@ -136,16 +145,17 @@ class StandardComparator:
         }
 
     def _resize_to_match(self, img1: np.ndarray, img2: np.ndarray) -> np.ndarray:
-        """调整图片尺寸一致"""
+        """将标准图缩放到与待检图相同的分辨率，避免upscale导致模糊"""
         h1, w1 = img1.shape[:2]
         h2, w2 = img2.shape[:2]
 
         if h1 == h2 and w1 == w2:
             return img1
 
-        scale = min(w2 / w1, h2 / h1)
-        new_w, new_h = int(w1 * scale), int(h1 * scale)
-        return cv2.resize(img1, (new_w, new_h))
+        # 降采样 img2 (标准图) 到 img1 (待检图) 尺寸，而不是 upscale 待检图
+        # 降采样保留边缘细节，upscale 会模糊，导致轮廓数量失真
+        img2_resized = cv2.resize(img2, (w1, h1), interpolation=cv2.INTER_AREA)
+        return img2_resized
 
     def _extract_features(self, img: np.ndarray) -> List[Dict[str, Any]]:
         """提取图像特征（简化版：使用轮廓检测）"""

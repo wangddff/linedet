@@ -54,6 +54,9 @@ data/standard_images/
 *.jpeg
 !request/pic/*.png
 
+# DataSets
+datasets/images/*
+
 # Logs
 *.log
 logs/

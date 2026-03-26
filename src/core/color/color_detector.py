@@ -527,14 +527,38 @@ class ColorDetector:
             "compare_result": compare_result,
         }
 
+    def _hsv_color_distance(
+        self, h1: float, s1: float, v1: float, h2: float, s2: float, v2: float
+    ) -> float:
+        """计算两个 HSV 颜色之间的归一化距离（0=完全相同，1=完全不同）
+
+        自适应权重策略：
+        - 低饱和度（无色彩，灰/黑/白）：V 亮度是主要区分依据
+        - 高饱和度（彩色线材）：H 色相是主要区分依据
+        Hue 是环形（OpenCV H 范围 0-180），用圆弧距离。
+        """
+        h_diff = abs(h1 - h2)
+        h_dist = min(h_diff, 180.0 - h_diff) / 90.0  # 归一化到 0~1
+        s_dist = abs(s1 - s2) / 255.0
+        v_dist = abs(v1 - v2) / 255.0
+        avg_s = (s1 + s2) / 2.0
+        if avg_s < 50:  # 非彩色（灰/黑/白）：亮度主导
+            return h_dist * 0.10 + s_dist * 0.25 + v_dist * 0.65
+        else:           # 彩色：色相主导
+            return h_dist * 0.60 + s_dist * 0.25 + v_dist * 0.15
+
     def _compare_with_standard(self, current_colors: List[Dict]) -> Dict[str, Any]:
-        """与标准图颜色比对"""
+        """与标准图颜色比对（优先使用相对HSV距离，兜底用颜色名称）"""
         if not self.standard_colors:
             return {"passed": True, "message": "无标准颜色，跳过比对", "errors": []}
 
         errors = []
+        std_entries = list(self.standard_colors.values())  # 已按 group_id 顺序
         current_color_list = [c.get("color") for c in current_colors]
-        standard_color_list = [v.get("color") for v in self.standard_colors.values()]
+        standard_color_list = [v.get("color") for v in std_entries]
+
+        from src.utils.config import get_color_hsv_thresholds
+        HSV_DIST_THRESHOLD_CHROMA, HSV_DIST_THRESHOLD_ACHROMA = get_color_hsv_thresholds()
 
         if len(current_color_list) < len(standard_color_list):
             errors.append(
@@ -544,9 +568,40 @@ class ColorDetector:
                 }
             )
 
-        for i, std_color in enumerate(standard_color_list):
-            if i < len(current_color_list):
-                curr_color = current_color_list[i]
+        for i, std_entry in enumerate(std_entries):
+            if i >= len(current_colors):
+                break
+            curr = current_colors[i]
+            std_color = std_entry.get("color", "未知")
+            curr_color = curr.get("color", "未知")
+
+            std_hsv = std_entry.get("hsv")
+            curr_hsv = curr.get("hsv")
+
+            if std_hsv and curr_hsv:
+                # 优先：相对 HSV 距离比较，对光照变化鲁棒
+                dist = self._hsv_color_distance(
+                    std_hsv["h"], std_hsv["s"], std_hsv["v"],
+                    curr_hsv["h"], curr_hsv["s"], curr_hsv["v"],
+                )
+                avg_s = (std_hsv["s"] + curr_hsv["s"]) / 2.0
+                threshold = HSV_DIST_THRESHOLD_ACHROMA if avg_s < 50 else HSV_DIST_THRESHOLD_CHROMA
+                if dist >= threshold:
+                    errors.append(
+                        {
+                            "type": "color_mismatch",
+                            "wire_index": i,
+                            "expected": std_color,
+                            "actual": curr_color,
+                            "hsv_distance": round(dist, 3),
+                            "message": (
+                                f"线{i + 1}颜色不匹配: 期望 {std_color}, 实际 {curr_color} "
+                                f"(HSV距离={dist:.2f})"
+                            ),
+                        }
+                    )
+            else:
+                # 兜底：颜色名称字符串比较
                 if (
                     curr_color != std_color
                     and curr_color != "未知"

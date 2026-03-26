@@ -17,7 +17,7 @@ class ROIComparator:
     4. 计算每个 ROI 区域的相似度
     """
 
-    def __init__(self, similarity_threshold: float = 0.8):
+    def __init__(self, similarity_threshold: float = 0.65):
         self.similarity_threshold = similarity_threshold
 
     def compare_roi_regions(
@@ -205,6 +205,11 @@ class ROIComparator:
             else test_roi
         )
 
+        # 对每个 ROI 局部做 CLAHE 归一化，消除光照/曝光差异对比较的影响
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(4, 4))
+        std_gray = clahe.apply(std_gray)
+        test_gray = clahe.apply(test_gray)
+
         ssim_score = self._calculate_ssim(std_gray, test_gray)
 
         hist_score = self._calculate_histogram_similarity(std_gray, test_gray)
@@ -335,7 +340,7 @@ class ROIComparator:
 class ROIComparatorV2:
     """ROI 区域对比模块 V2 - 基于 detect_area 的精确对比"""
 
-    def __init__(self, similarity_threshold: float = 0.8):
+    def __init__(self, similarity_threshold: float = 0.65):
         self.similarity_threshold = similarity_threshold
         self.comparator = ROIComparator(similarity_threshold)
 
